@@ -31,7 +31,7 @@ function App() {
           } />
 
           <Route path="/admin" element={
-            <ProtectedRoute >
+            <ProtectedRoute requiredPermissions={["TENANT_READ", "USER_READ"]}>
               <Layout>
                 <AdminDashboard />
               </Layout>
