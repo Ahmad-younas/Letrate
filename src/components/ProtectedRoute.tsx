@@ -20,6 +20,8 @@ export const ProtectedRoute = ({
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  
+
   const hasRequiredPermissions = requiredPermissions.length === 0 || 
     requiredPermissions.every(permission => hasPermission(permission));
 

@@ -6,9 +6,13 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Icons } from "@/components/icons";
+import { useAuth } from "@/contexts/AuthContext";
+import { parseToken } from "@/utils/token";
+import { api } from "@/utils/api";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -22,11 +26,20 @@ export default function LoginPage() {
     const password = formData.get("password") as string;
 
     try {
-      // TODO: Implement actual login logic here
-      console.log("Login attempt with:", { email, password });
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      navigate("/dashboard");
+      const data = await api.post("/api/auth/login", { email, password });
+      const tokenData = parseToken(data.token);
+      console.log("Token Data:", tokenData);
+      
+      login(data.token);
+      
+      // Check user roles and redirect accordingly
+      if (tokenData.roles.includes("TENANT_ADMIN")) {
+        navigate("/admin");
+      }else if(tokenData.roles.includes("STUDENT")){
+        navigate("/dashboard");
+      }else {
+        navigate("/unauthorized");
+      }
     } catch (err) {
       setError("Invalid email or password");
     } finally {

@@ -1,15 +1,17 @@
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, BookOpen, MessageSquare, Activity, Mail, Upload, Loader2 } from "lucide-react";
+import { Users, BookOpen, MessageSquare, Activity, Mail, Upload, Loader2, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState, useRef } from "react";
 import * as XLSX from 'xlsx';
-
-const TENANT_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
-const API_URL = "http://localhost:8080/api/users/invited-users";
+import { api } from "@/utils/api";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const AdminDashboard = () => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [emails, setEmails] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
@@ -57,32 +59,25 @@ const AdminDashboard = () => {
     }
 
     if (validateEmails(emails)) {
-      const emailList = emails.split(",").map(email => email.trim()).filter(Boolean);
-      const payload = {
-        emails: emailList,
-        tenantId: TENANT_ID
-      };
-
       try {
-        const response = await fetch(API_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload)
-        });
+        const emailList = emails.split(",").map(email => email.trim()).filter(Boolean);
+        const payload = {
+          emails: emailList,
+          tenantId: user?.tenantId
+        };
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await api.post("/api/tenant/users/invite", payload, user?.token);
+        
+        if (data.success) {
+          setSuccess(data.message);
+          setEmails("");
+          setError("");
+        } else {
+          throw new Error(data.message || "Failed to send invites");
         }
-
-        console.log(JSON.stringify(payload));
-        setSuccess("Emails sent successfully!");
-        setEmails("");
-        setError("");
-      } catch (error) {
+      } catch (error: any) {
+        setError(error.message || "Failed to send emails. Please try again later.");
         console.error("Error sending emails:", error);
-        setError("Failed to send emails. Please try again.");
       }
     }
   };
@@ -148,43 +143,59 @@ const AdminDashboard = () => {
   };
 
   const handleSendEmails = async () => {
-    if (!fileEmails.length) return;
+    if (!fileEmails.length) {
+      setFileError("No valid emails to send");
+      return;
+    }
     
     setIsSending(true);
     try {
       const payload = {
         emails: fileEmails,
-        tenantId: TENANT_ID
+        tenantId: user?.tenantId
       };
 
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
-      });
+      const data = await api.post("/api/tenant/users/invite", payload, user?.token);
+      console.log("data", data);
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (data.success) {
+        setFileSuccess(data.message);
+        resetFileStates();
+      } else {
+        throw new Error(data.message || "Failed to send invites");
       }
-
-      console.log(JSON.stringify(payload));
-      setFileSuccess(`Successfully sent emails to ${fileEmails.length} recipients`);
-      resetFileStates();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error sending emails:", error);
-      setFileError("Failed to send emails. Please try again.");
+      setFileError(error.message || "Failed to send emails. Please check your connection and try again.");
     } finally {
       setIsSending(false);
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/login");
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
+  };
+
   return (
     <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        <p className="text-muted-foreground">Welcome back, Admin</p>
+      <div className="mb-8 flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+          <p className="text-muted-foreground">Welcome back, Admin</p>
+        </div>
+        <Button 
+          variant="outline" 
+          onClick={handleLogout}
+          className="flex items-center gap-2 hover:text-red-600 hover:border-red-600"
+        >
+          <LogOut className="h-4 w-4" />
+          Logout
+        </Button>
       </div>
 
       {/* Stats Grid */}

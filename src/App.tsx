@@ -9,21 +9,21 @@ import { Layout } from "./components/Layout";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import UnauthorizedPage from "@/pages/UnauthorizedPage";
+import UnauthorizedPage from "./pages/UnauthorizedPage";
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignUpPage />} />
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
           
           {/* Protected Routes */}
           <Route path="/dashboard" element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRoles={["STUDENT"]}>
               <Layout>
                 <Dashboard />
               </Layout>
@@ -31,7 +31,7 @@ function App() {
           } />
 
           <Route path="/admin" element={
-            <ProtectedRoute requiredPermissions={["TENANT_READ", "USER_READ"]}>
+            <ProtectedRoute requiredRoles={["TENANT_ADMIN"]}>
               <Layout>
                 <AdminDashboard />
               </Layout>

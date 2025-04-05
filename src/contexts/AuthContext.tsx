@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
+import { parseToken } from '@/utils/token';
 
 interface AuthUser {
   userId: string;
@@ -23,12 +24,14 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(() => {
     const savedToken = localStorage.getItem('auth_token');
     if (savedToken) {
       try {
-        const tokenData = JSON.parse(atob(savedToken.split('.')[1]));
+        const tokenData = parseToken(savedToken);
+        if (!tokenData) return null;
         return {
           userId: tokenData.userId,
           tenantId: tokenData.tenantId,
@@ -51,7 +54,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = (token: string) => {
     localStorage.setItem('auth_token', token);
     try {
-      const tokenData = JSON.parse(atob(token.split('.')[1]));
+      const tokenData = parseToken(token);
+      console.log("Token Data:", tokenData);
+      if (!tokenData) return;
       setUser({
         userId: tokenData.userId,
         tenantId: tokenData.tenantId,

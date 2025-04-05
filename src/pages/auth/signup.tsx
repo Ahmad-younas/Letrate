@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Icons } from "@/components/icons";
+import { api } from "@/utils/api";
 
 export default function SignUpPage() {
   const navigate = useNavigate();
@@ -18,7 +19,8 @@ export default function SignUpPage() {
     setError("");
 
     const formData = new FormData(event.target as HTMLFormElement);
-    const name = formData.get("name") as string;
+    const firstName = formData.get("firstName") as string;
+    const lastName = formData.get("lastName") as string;
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
     const confirmPassword = formData.get("confirmPassword") as string;
@@ -30,13 +32,21 @@ export default function SignUpPage() {
     }
 
     try {
-      // TODO: Implement actual signup logic here
-      console.log("Signup attempt with:", { name, email, password });
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      navigate("/dashboard");
-    } catch (err) {
-      setError("Failed to create account");
+      const response = await api.post("/api/auth/student/signup", {
+        firstName,
+        lastName,
+        email,
+        password
+      });
+
+      console.log(response);
+      if (response.success) {
+        navigate("/login");
+      } else {
+        throw new Error(response.message || "Failed to create account");
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to create account. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -58,15 +68,27 @@ export default function SignUpPage() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
-              <Input
-                id="name"
-                name="name"
-                placeholder="John Doe"
-                required
-                disabled={isLoading}
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name</Label>
+                <Input
+                  id="firstName"
+                  name="firstName"
+                  placeholder="John"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input
+                  id="lastName"
+                  name="lastName"
+                  placeholder="Doe"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
