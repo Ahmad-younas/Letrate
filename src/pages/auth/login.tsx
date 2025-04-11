@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,18 +7,28 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Icons } from "@/components/icons";
 import { useAuth } from "@/contexts/AuthContext";
-import { parseToken } from "@/utils/token";
-import { api } from "@/utils/api";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
+  const { login, isAuthenticated, user, isLoading } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      // Redirect based on user role
+      if (user?.roles.includes("TENANT_ADMIN")) {
+        navigate("/admin");
+      } else {
+        navigate("/");
+      }
+    }
+  }, [isAuthenticated, isLoading, navigate, user]);
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
-    setIsLoading(true);
+    setIsSubmitting(true);
     setError("");
 
     const formData = new FormData(event.target as HTMLFormElement);
@@ -26,34 +36,30 @@ export default function LoginPage() {
     const password = formData.get("password") as string;
 
     try {
-      const data = await api.post("/api/auth/login", { email, password });
-      const tokenData = parseToken(data.token);
-      console.log("Token Data:", tokenData);
-      
-      login(data.token);
-      
-      // Check user roles and redirect accordingly
-      if (tokenData.roles.includes("TENANT_ADMIN")) {
-        navigate("/admin");
-      }else if(tokenData.roles.includes("STUDENT")){
-        navigate("/dashboard");
-      }else {
-        navigate("/unauthorized");
-      }
-    } catch (err) {
-      setError("Invalid email or password");
+      await login(email, password);
+      // Navigation will be handled by the useEffect above
+    } catch (err: any) {
+      setError(err.message || "Invalid email or password");
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Icons.spinner className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Welcome back</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">Sign in to your account</CardTitle>
           <CardDescription className="text-center">
-            Enter your email to sign in to your account
+            Enter your email and password to access your account
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -71,7 +77,7 @@ export default function LoginPage() {
                 type="email"
                 placeholder="m@example.com"
                 required
-                disabled={isLoading}
+                disabled={isSubmitting}
               />
             </div>
             <div className="space-y-2">
@@ -81,14 +87,14 @@ export default function LoginPage() {
                 name="password"
                 type="password"
                 required
-                disabled={isLoading}
+                disabled={isSubmitting}
               />
             </div>
-            <Button className="w-full" type="submit" disabled={isLoading}>
-              {isLoading && (
+            <Button className="w-full" type="submit" disabled={isSubmitting}>
+              {isSubmitting && (
                 <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
               )}
-              Sign In
+              Sign in
             </Button>
           </form>
         </CardContent>
@@ -101,7 +107,7 @@ export default function LoginPage() {
               <span className="bg-white px-2 text-gray-500">Or continue with</span>
             </div>
           </div>
-          <Button variant="outline" disabled={isLoading} className="w-full">
+          <Button variant="outline" disabled={isSubmitting} className="w-full">
             <Icons.google className="mr-2 h-4 w-4" /> Google
           </Button>
           <div className="text-center text-sm">

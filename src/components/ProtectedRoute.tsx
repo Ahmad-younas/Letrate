@@ -1,36 +1,58 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { ReactNode } from 'react';
+import { Icons } from '@/components/icons';
 
 interface ProtectedRouteProps {
-  children: ReactNode;
-  requiredPermissions?: string[];
+  children: React.ReactNode;
   requiredRoles?: string[];
+  requiredPermissions?: string[];
 }
 
-export const ProtectedRoute = ({
+export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
-  requiredPermissions = [],
-  requiredRoles = []
-}: ProtectedRouteProps) => {
-  const { isAuthenticated, hasPermission, hasRole } = useAuth();
+  requiredRoles = [],
+  requiredPermissions = []
+}) => {
+
+  console.log("ProtectedRoute rendered", children);
+  const { isAuthenticated, user, isLoading } = useAuth();
   const location = useLocation();
 
+  // Show loading spinner while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Icons.spinner className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+ 
+
+  // If not authenticated, redirect to login
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  
 
-  const hasRequiredPermissions = requiredPermissions.length === 0 || 
-    requiredPermissions.every(permission => hasPermission(permission));
-
-  const hasRequiredRoles = requiredRoles.length === 0 || 
-    requiredRoles.some(role => hasRole(role));
-
-  if (!hasRequiredPermissions || !hasRequiredRoles) {
-    return <Navigate to="/unauthorized" replace />;
+  // Check if user has required roles
+  if (requiredRoles.length > 0) {
+    const hasRequiredRole = requiredRoles.some(role => user?.roles.includes(role));
+    if (!hasRequiredRole) {
+      return <Navigate to="/unauthorized" replace />;
+    }
   }
 
+  // Check if user has required permissions
+  if (requiredPermissions.length > 0) {
+    const hasRequiredPermission = requiredPermissions.some(permission => 
+      user?.permissions.includes(permission)
+    );
+    if (!hasRequiredPermission) {
+      return <Navigate to="/unauthorized" replace />;
+    }
+  }
+
+  // User is authenticated and has required roles/permissions
   return <>{children}</>;
 }; 

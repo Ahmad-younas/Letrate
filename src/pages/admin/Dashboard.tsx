@@ -1,17 +1,20 @@
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, BookOpen, MessageSquare, Activity, Mail, Upload, Loader2, LogOut } from "lucide-react";
+import { Users, BookOpen, MessageSquare, Activity, Mail, Upload, Loader2, LogOut, Clock, FileText, Plus, Search, Play } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import * as XLSX from 'xlsx';
 import { api } from "@/utils/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
+import { useDispatch } from 'react-redux';
 
 const AdminDashboard = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, getTokenExpirationTime } = useAuth();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [emails, setEmails] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
@@ -23,6 +26,58 @@ const AdminDashboard = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Test state
+  const [tests, setTests] = useState<any[]>([]);
+  const [isLoadingTests, setIsLoadingTests] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterType, setFilterType] = useState("all");
+  const [filterTask, setFilterTask] = useState("all");
+  const [testError, setTestError] = useState<string>("");
+  const [isLoadingTestDetails, setIsLoadingTestDetails] = useState(false);
+  const [selectedTestId, setSelectedTestId] = useState<string | null>(null);
+  const [testDetailsError, setTestDetailsError] = useState<string>("");
+
+  // Fetch tests on component mount
+  useEffect(() => {
+    const fetchTests = async () => {
+      try {
+        setIsLoadingTests(true);
+        setTestError("");
+        
+        // Fetch tests from API
+        const response = await api.get("/api/tests", user?.token || "");
+        console.log("API Response of tests:", response);
+        
+        if (response.status === 200) {
+          // Handle the new response structure
+          setTests(response.data || []);
+        } else {
+          setTestError(response.message || "Failed to fetch tests");
+        }
+      } catch (error: any) {
+        console.error("Error fetching tests:", error);
+        setTestError(error.message || "An error occurred while fetching tests");
+      } finally {
+        setIsLoadingTests(false);
+      }
+    };
+
+    fetchTests();
+  }, [user?.token]);
+
+  // Filter tests based on search query and filters
+  const filteredTests = tests.filter(test => {
+    const matchesSearch = (test.name || "").toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType = filterType === "all" || (test.type === filterType);
+    const matchesTask = filterTask === "all" || (test.task === filterTask);
+    
+    return matchesSearch && matchesType && matchesTask;
+  });
+
+  // Get unique test types and tasks for filters
+  const testTypes = ["all", ...new Set(tests.map(test => test.type || "Unknown"))];
+  const testTasks = ["all", ...new Set(tests.map(test => test.task || "Unknown"))];
 
   const resetFileStates = () => {
     setFileEmails([]);
@@ -181,6 +236,77 @@ const AdminDashboard = () => {
     }
   };
 
+  // Function to handle taking a test
+  const handleTakeTest = async (testId: string) => {
+    try {
+      setIsLoadingTestDetails(true);
+      dispatch({ type: 'test/setLoading', payload: true });
+      setSelectedTestId(testId);
+      
+      // Fetch test details from API
+      const response = await api.get(`/api/tests/${testId}`, user?.token || "");
+      console.log("Test Details Response:", response);
+      
+      if (response.status === 200) {
+        // Process the API response
+        let testData = response.data;
+
+        console.log("Test Data:", testData);
+        
+        // Make sure there's at least one module
+        if (!testData.modules || testData.modules.length === 0) {
+          // Create a default module structure if none exists
+          testData = {
+            ...testData,
+            modules: [{
+              id: "1",
+              name: "Reading",
+              totalParts: 2,
+              allowedTime: 60,
+              isCountDown: true,
+              timeUnit: "minutes",
+              parts: [{
+                id: "1",
+                name: "Part 1",
+                sections: []
+              }],
+              officialInstructions: [
+                "Do not open this question paper until you are told to do so.",
+                "Write your name and candidate number in the spaces at the top of this page.",
+                "Read the instructions for each part of the paper carefully.",
+                "Answer all the questions.",
+                "Write your answers on the answer sheet. Use a pencil.",
+                "You must complete the answer sheet within the time limit.",
+                "At the end of the test, hand in both this question paper and your answer sheet."
+              ],
+              informationForCandidates: [
+                "There are 40 questions.",
+                "Each question carries one mark.",
+                "YOU MUST FILL IN YOUR ANSWER SHEET!",
+                "To view the answer sheet, click VIEW ANSWER SHEET at the bottom of the paper."
+              ]
+            }]
+          };
+        }
+        
+        dispatch({ type: 'test/setCurrentTest', payload: testData });
+        navigate(`/test/${testId}`); // Navigate to test page
+      } else {
+        const errorMsg = response.message || "Failed to load test details";
+        dispatch({ type: 'test/setError', payload: errorMsg });
+        setTestDetailsError(errorMsg);
+      }
+    } catch (error: any) {
+      console.error("Error loading test details:", error);
+      const errorMessage = error.message || "An error occurred while loading test details";
+      dispatch({ type: 'test/setError', payload: errorMessage });
+      setTestDetailsError(errorMessage);
+    } finally {
+      setIsLoadingTestDetails(false);
+      dispatch({ type: 'test/setLoading', payload: false });
+    }
+  };
+
   return (
     <div className="p-8">
       <div className="mb-8 flex justify-between items-center">
@@ -188,14 +314,20 @@ const AdminDashboard = () => {
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
           <p className="text-muted-foreground">Welcome back, Admin</p>
         </div>
-        <Button 
-          variant="outline" 
-          onClick={handleLogout}
-          className="flex items-center gap-2 hover:text-red-600 hover:border-red-600"
-        >
-          <LogOut className="h-4 w-4" />
-          Logout
-        </Button>
+        <div className="flex items-center gap-4">
+          <Badge variant="outline" className="flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            <span>{getTokenExpirationTime()}</span>
+          </Badge>
+          <Button 
+            variant="outline" 
+            onClick={handleLogout}
+            className="flex items-center gap-2 hover:text-red-600 hover:border-red-600"
+          >
+            <LogOut className="h-4 w-4" />
+            Logout
+          </Button>
+        </div>
       </div>
 
       {/* Stats Grid */}
@@ -257,6 +389,7 @@ const AdminDashboard = () => {
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="tests">Tests</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -482,7 +615,171 @@ const AdminDashboard = () => {
               </div>
             </Card>
           </div>
-        </TabsContent>        
+        </TabsContent>
+
+        {/* Tests Tab */}
+        <TabsContent value="tests" className="space-y-4">
+          <Card className="p-6">
+            <div className="flex flex-col space-y-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <h2 className="text-xl font-bold">IELTS Tests</h2>
+                <Button className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  Create New Test
+                </Button>
+              </div>
+
+              {/* Filters */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="relative flex-1">
+                  <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <Input
+                    placeholder="Search tests..."
+                    className="pl-10"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <select
+                    className="px-3 py-2 border rounded-md"
+                    value={filterType}
+                    onChange={(e) => setFilterType(e.target.value)}
+                  >
+                    {testTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {type === "all" ? "All Types" : type}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    className="px-3 py-2 border rounded-md"
+                    value={filterTask}
+                    onChange={(e) => setFilterTask(e.target.value)}
+                  >
+                    {testTasks.map((task) => (
+                      <option key={task} value={task}>
+                        {task === "all" ? "All Tasks" : task}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Tests Grid */}
+              {isLoadingTests ? (
+                <div className="flex justify-center items-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                </div>
+              ) : testError ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <FileText className="h-12 w-12 text-gray-300 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-700 mb-1">No tests found</h3>
+                  <p className="text-gray-500 max-w-md mb-4">No test found against this admin tenant</p>
+                  <Button onClick={() => window.location.reload()}>
+                    Try Again
+                  </Button>
+                </div>
+              ) : filteredTests.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredTests.map((test) => (
+                    <Card key={test.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                      <div className="p-4 border-b">
+                        <div className="flex justify-between items-start">
+                          <h3 className="font-semibold text-lg">{test.name}</h3>
+                          <Badge 
+                            variant={test.status === "PUBLISHED" ? "default" : "secondary"}
+                            className="ml-2"
+                          >
+                            {test.status || "Unknown Status"}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="p-4">
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div>
+                            <p className="text-muted-foreground">ID</p>
+                            <p className="font-medium">{test.id}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Source</p>
+                            <p className="font-medium">{test.source || "Unknown"}</p>
+                          </div>
+                          {test.type && (
+                            <div>
+                              <p className="text-muted-foreground">Type</p>
+                              <p className="font-medium">{test.type}</p>
+                            </div>
+                          )}
+                          {test.task && (
+                            <div>
+                              <p className="text-muted-foreground">Task</p>
+                              <p className="font-medium">{test.task}</p>
+                            </div>
+                          )}
+                          {test.questions && (
+                            <div>
+                              <p className="text-muted-foreground">Questions</p>
+                              <p className="font-medium">{test.questions}</p>
+                            </div>
+                          )}
+                          {test.duration && (
+                            <div>
+                              <p className="text-muted-foreground">Duration</p>
+                              <p className="font-medium">{test.duration}</p>
+                            </div>
+                          )}
+                          {test.difficulty && (
+                            <div>
+                              <p className="text-muted-foreground">Difficulty</p>
+                              <p className="font-medium">{test.difficulty}</p>
+                            </div>
+                          )}
+                        </div>
+                        <div className="mt-4 flex justify-end gap-2">
+                          <Button variant="outline" size="sm">
+                            Edit
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            onClick={() => handleTakeTest(test.id)}
+                            disabled={isLoadingTestDetails && selectedTestId === test.id}
+                          >
+                            {isLoadingTestDetails && selectedTestId === test.id ? (
+                              <>
+                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                Loading...
+                              </>
+                            ) : (
+                              <>
+                                <Play className="h-3 w-3 mr-1" />
+                                Take Test
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <FileText className="h-12 w-12 text-gray-300 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-700 mb-1">No tests found</h3>
+                  <p className="text-gray-500 max-w-md">
+                    {searchQuery || filterType !== "all" || filterTask !== "all"
+                      ? "No tests match your current filters. Try adjusting your search criteria."
+                      : "No test found against this admin tenant. Click the 'Create New Test' button to get started."}
+                  </p>
+                  <Button className="mt-4">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create New Test
+                  </Button>
+                </div>
+              )}
+            </div>
+          </Card>
+        </TabsContent>
       </Tabs>
     </div>
   );
