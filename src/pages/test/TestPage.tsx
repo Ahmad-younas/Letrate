@@ -7,14 +7,13 @@ import { useEffect, useState, useRef } from 'react';
 import ReadingTest from '../reading';
 import ListeningTest from '../listening';
 import WritingTest from '../writing';
-import { api } from "@/utils/api";
 import { useAuth } from "@/contexts/AuthContext";
-import { ApiResponse } from '@/store/features/testSlice';
 
 const TestPage = () => {
   const { user } = useAuth();
   const { testId } = useParams();
   const navigate = useNavigate();
+  const [currentModuleIndex, setCurrentModuleIndex] = useState(0);
   const dispatch = useDispatch();
   const { currentTest, isLoading, error } = useSelector((state: RootState) => state.test);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -110,7 +109,29 @@ const TestPage = () => {
       }
     } else if (!isModule) {
       console.log("Inside else if - not a module but may contain modules");
-      
+      if (currentTest.modules && currentTest.modules.length > 0) {
+        const currentModule = currentTest.modules[currentModuleIndex];
+        const moduleName = currentModule.name.toLowerCase();
+  
+        // Function to handle module completion
+        const handleModuleComplete = () => {
+          if (currentModuleIndex < currentTest.modules.length - 1) {
+            // Move to the next module
+            setCurrentModuleIndex(currentModuleIndex + 1);
+          } else {
+            // All modules completed, call the test completion handler
+            handleTestComplete();
+          }
+        };
+
+        if (moduleName === 'academic-reading' || (moduleName.includes('academic') && moduleName.includes('reading'))) {
+          return <ReadingTest test={currentModule} onComplete={handleModuleComplete} />;
+        } else if (moduleName === 'academic-listening' || (moduleName.includes('academic') && moduleName.includes('listening'))) {
+          return <ListeningTest test={currentModule} onComplete={handleModuleComplete} />;
+        } else if (moduleName === 'academic-writing' || (moduleName.includes('academic') && moduleName.includes('writing'))) {
+          return <WritingTest test={currentModule} onComplete={handleModuleComplete} />;
+        }
+      }
     }
     
     // Default fallback if no specific module is detected

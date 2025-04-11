@@ -306,10 +306,7 @@ export default function Dashboard() {
       if (response.status === 200) {
         // Process the API response
         let testData = response.data;
-
         console.log("Test Data:", testData);
-        
-        
         dispatch({ type: 'test/setCurrentTest', payload: testData });
         navigate(`/test/`); // Navigate to test page
       } else {

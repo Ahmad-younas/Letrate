@@ -26,12 +26,12 @@ interface WritingTestProps {
   test?: any; // Use any for now, can be typed more strictly if needed
 }
 
-export default function WritingTest({ onComplete }: WritingTestProps) {
+export default function WritingTest({ onComplete, test }: WritingTestProps) {
   const { testId } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useAuth();
-  const { currentTest, isLoading, error } = useSelector((state: RootState) => state.test);
+  const { isLoading, error } = useSelector((state: RootState) => state.test);
   
   const [timer, setTimer] = useState(60); // Default 60 minutes    
   const [currentPart, setCurrentPart] = useState<number>(1);
@@ -46,7 +46,7 @@ export default function WritingTest({ onComplete }: WritingTestProps) {
   const [pageLoading, setPageLoading] = useState(true);
 
   // Find the writing module
-  const writingModule = currentTest;
+  const writingModule = test;
 
   // Get writing parts
   const writingParts = writingModule?.partDetails as unknown as WritingPart[] || [];
@@ -67,7 +67,7 @@ export default function WritingTest({ onComplete }: WritingTestProps) {
       }
 
       // If test already loaded in Redux, don't fetch again
-      if (currentTest && currentTest.id === testId) {
+      if (writingModule && writingModule.id === testId) {
         setPageLoading(false);
         return;
       }
@@ -94,7 +94,7 @@ export default function WritingTest({ onComplete }: WritingTestProps) {
     };
 
     fetchTestData();
-  }, [testId, currentTest?.id, dispatch, user?.token]);
+  }, [testId, writingModule?.id, dispatch, user?.token]);
 
   // Start the countdown timer
   useEffect(() => {
@@ -160,7 +160,7 @@ export default function WritingTest({ onComplete }: WritingTestProps) {
     );
   }
 
-  if (!currentTest || !writingModule) {
+  if (!writingModule) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <h1 className="text-2xl font-bold text-gray-800 mb-4">Test Not Found</h1>
@@ -220,15 +220,15 @@ export default function WritingTest({ onComplete }: WritingTestProps) {
                     value={answers.part1}
                     onChange={(e) => handleTextChange(1, e.target.value)}
                     // Disable grammar and spell checking
-                    data-gramm="false"
-                    data-gramm_editor="false"
-                    data-enable-grammarly="false"
-                    spellCheck="false"
-                    autoCorrect="off"
-                    autoCapitalize="off"
-                    // Prevent extensions from injecting content
-                    data-ms-editor="false"
-                    data-lt-installed="false"
+                    // data-gramm="false"
+                    // data-gramm_editor="false"
+                    // data-enable-grammarly="false"
+                    // spellCheck="false"
+                    // autoCorrect="off"
+                    // autoCapitalize="off"
+                    // // Prevent extensions from injecting content
+                    // data-ms-editor="false"
+                    // data-lt-installed="false"
                     // Custom styles to prevent interference
                     style={{ 
                       WebkitTextFillColor: 'inherit',
@@ -239,18 +239,18 @@ export default function WritingTest({ onComplete }: WritingTestProps) {
                       msUserSelect: 'none'
                     }}
                     // Completely disable copy-paste and text selection
-                    onContextMenu={(e) => e.preventDefault()}
-                    onCopy={(e) => e.preventDefault()}
-                    onCut={(e) => e.preventDefault()}
-                    onPaste={(e) => e.preventDefault()}
-                    onDragStart={(e) => e.preventDefault()}
-                    onDrop={(e) => e.preventDefault()}
-                    onKeyDown={(e) => {
-                      // Prevent Ctrl+C, Ctrl+V, Ctrl+X
-                      if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'v' || e.key === 'x')) {
-                        e.preventDefault();
-                      }
-                    }}
+                    // onContextMenu={(e) => e.preventDefault()}
+                    // onCopy={(e) => e.preventDefault()}
+                    // onCut={(e) => e.preventDefault()}
+                    // onPaste={(e) => e.preventDefault()}
+                    // onDragStart={(e) => e.preventDefault()}
+                    // onDrop={(e) => e.preventDefault()}
+                    // onKeyDown={(e) => {
+                    //   // Prevent Ctrl+C, Ctrl+V, Ctrl+X
+                    //   if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'v' || e.key === 'x')) {
+                    //     e.preventDefault();
+                    //   }
+                    // }}
                   />
                   
                   {/* Word Count */}
@@ -295,15 +295,15 @@ export default function WritingTest({ onComplete }: WritingTestProps) {
                     value={answers.part2}
                     onChange={(e) => handleTextChange(2, e.target.value)}
                     // Disable grammar and spell checking
-                    data-gramm="false"
-                    data-gramm_editor="false"
-                    data-enable-grammarly="false"
-                    spellCheck="false"
-                    autoCorrect="off"
-                    autoCapitalize="off"
-                    // Prevent extensions from injecting content
-                    data-ms-editor="false"
-                    data-lt-installed="false"
+                    // data-gramm="false"
+                    // data-gramm_editor="false"
+                    // data-enable-grammarly="false"
+                    // spellCheck="false"
+                    // autoCorrect="off"
+                    // autoCapitalize="off"
+                    // // Prevent extensions from injecting content
+                    // data-ms-editor="false"
+                    // data-lt-installed="false"
                     // Custom styles to prevent interference
                     style={{ 
                       WebkitTextFillColor: 'inherit',
@@ -314,18 +314,18 @@ export default function WritingTest({ onComplete }: WritingTestProps) {
                       msUserSelect: 'none'
                     }}
                     // Completely disable copy-paste and text selection
-                    onContextMenu={(e) => e.preventDefault()}
-                    onCopy={(e) => e.preventDefault()}
-                    onCut={(e) => e.preventDefault()}
-                    onPaste={(e) => e.preventDefault()}
-                    onDragStart={(e) => e.preventDefault()}
-                    onDrop={(e) => e.preventDefault()}
-                    onKeyDown={(e) => {
-                      // Prevent Ctrl+C, Ctrl+V, Ctrl+X
-                      if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'v' || e.key === 'x')) {
-                        e.preventDefault();
-                      }
-                    }}
+                    // onContextMenu={(e) => e.preventDefault()}
+                    // onCopy={(e) => e.preventDefault()}
+                    // onCut={(e) => e.preventDefault()}
+                    // onPaste={(e) => e.preventDefault()}
+                    // onDragStart={(e) => e.preventDefault()}
+                    // onDrop={(e) => e.preventDefault()}
+                    // onKeyDown={(e) => {
+                    //   // Prevent Ctrl+C, Ctrl+V, Ctrl+X
+                    //   if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'v' || e.key === 'x')) {
+                    //     e.preventDefault();
+                    //   }
+                    // }}
                   />
                   
                   {/* Word Count */}
@@ -346,6 +346,17 @@ export default function WritingTest({ onComplete }: WritingTestProps) {
             </Card>
           </TabsContent>
         </Tabs>
+        
+        {/* Submit Button */}
+        <div className="mt-6 flex justify-end ">
+          <Button 
+            onClick={handleSubmitAnswer}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg"
+            disabled={wordCounts.part1 < 150 || wordCounts.part2 < 250}
+          >
+            Submit Test
+          </Button>
+        </div>
       </div>
     </div>
   );

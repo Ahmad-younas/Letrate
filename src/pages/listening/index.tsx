@@ -71,7 +71,7 @@ interface ListeningTestProps {
   test?: any; // Use any for now, can be typed more strictly if needed
 }
 
-export default function ListeningTest({ onComplete }: ListeningTestProps) {
+export default function ListeningTest({ onComplete, test }: ListeningTestProps) {
   const { testId } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -98,7 +98,7 @@ export default function ListeningTest({ onComplete }: ListeningTestProps) {
   const questionsContainerRef = useRef<HTMLDivElement>(null);
   const questionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  const listeningModule = currentTest;
+  const listeningModule = test;
 
   // Get current part data
   const currentPartDetails = listeningModule?.partDetails?.[currentPartIndex] as PartDetailsWithSubtitles | undefined;
@@ -125,6 +125,9 @@ export default function ListeningTest({ onComplete }: ListeningTestProps) {
 
       console.log("Audio Source:", audio);
       console.log("Parsed Sections:", sections);
+
+      
+
       
       audio.addEventListener('timeupdate', () => {
         setAudioProgress((audio.currentTime / audio.duration) * 100);
@@ -884,7 +887,7 @@ export default function ListeningTest({ onComplete }: ListeningTestProps) {
       <div className="border-t bg-gray-50 p-2 sticky bottom-0">
         <div className="flex justify-between items-center mb-2">
           <div className="flex gap-2 overflow-x-auto">
-            {listeningModule.partDetails?.map((part, index) => (
+            {listeningModule.partDetails?.map((part: any, index: number) => (
               <Button
                 key={part.id}
                 variant={currentPartIndex === index ? "default" : "outline"}

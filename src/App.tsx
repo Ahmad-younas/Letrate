@@ -15,7 +15,7 @@ import HomePage from "./pages/HomePage";
 import { Provider } from 'react-redux';
 import { store } from './store/store';
 import TestPage from "./pages/test/TestPage";
-import FullTest from "./pages/FullTest";
+
 
 function App() {
   return (
@@ -47,7 +47,7 @@ function App() {
 
             <Route path="/test" element={
               <ProtectedRoute>
-                <FullTest />
+                <TestPage />
               </ProtectedRoute>
             } />
 
