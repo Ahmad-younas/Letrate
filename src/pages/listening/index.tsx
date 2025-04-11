@@ -105,12 +105,6 @@ export default function ListeningTest({ onComplete, test }: ListeningTestProps) 
   // Get current question group data
   const currentQuestionGroupData = currentPartDetails?.question_groups?.[currentQuestionGroup];
 
-  // Set timer based on module data when available
-  useEffect(() => {
-    if (listeningModule?.allowedTime && listeningModule.timeUnit === "minutes") {
-      setTimer(listeningModule.allowedTime * 60);
-    }
-  }, [listeningModule]);
 
   // Initialize audio and parse subtitles
   useEffect(() => {
@@ -127,10 +121,14 @@ export default function ListeningTest({ onComplete, test }: ListeningTestProps) 
       console.log("Parsed Sections:", sections);
 
       
+      audio.addEventListener('loadedmetadata', () => {
+        setTimer(parseInt(formatTime(audio.duration)));
+      });
 
       
       audio.addEventListener('timeupdate', () => {
         setAudioProgress((audio.currentTime / audio.duration) * 100);
+
         setCurrentTime(audio.currentTime);
         
         // Update subtitle and section based on current time

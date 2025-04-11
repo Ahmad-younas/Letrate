@@ -105,6 +105,7 @@ export default function ReadingTest({ onComplete, test }: ReadingTestProps) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useAuth();
+  console.log("user:", user);
   
   // Use the passed test prop if available, otherwise get from Redux
   const reduxTestData = useSelector((state: RootState) => state.test);
@@ -229,7 +230,15 @@ export default function ReadingTest({ onComplete, test }: ReadingTestProps) {
 
   const handleSubmitAnswer = () => {
     setTimer(0);
-    console.log("Submitting answers:", answers);
+    
+    // Format answers for submission in the required format
+    const studentAnswers = Object.entries(answers).map(([questionId, answer]) => ({
+      userId: user?.id , // Use actual user ID or fallback
+      questionId: questionId,
+      studentAnswer: answer
+    }));
+    
+    console.log("Submitting answers:", JSON.stringify({ studentAnswers: studentAnswers }, null, 2));
     onComplete?.();
   };
 
@@ -336,7 +345,9 @@ export default function ReadingTest({ onComplete, test }: ReadingTestProps) {
                         {currentQuestionGroupData.type === "TrueFalseNotGiven" && currentQuestionGroupData.questions && (
                           currentQuestionGroupData.questions.map((question, index) => {
                             console.log("Question:", question);
-                            console.log("Answers:", answers);
+                            // Create a more reliable question ID
+                            const questionFullId = question.questionId || question.id;
+                            console.log("questionFullId:", questionFullId);
                             return (
                               <div 
                               key={question.questionId}
@@ -366,8 +377,8 @@ export default function ReadingTest({ onComplete, test }: ReadingTestProps) {
                                       type="radio"
                                       id={`question-${question.id}-option-${optionIndex}`}
                                       name={`question-${question.id}`}
-                                      checked={answers[`${currentPartDetails.id}_${question.id}`] === option}
-                                      onChange={() => handleOptionSelect(`${currentPartDetails.id}_${question.id}`, option)}
+                                      checked={answers[questionFullId] === option}
+                                      onChange={() => handleOptionSelect(questionFullId.toString(), option)}
                                         className="mt-1"
                                       />
                                       <label

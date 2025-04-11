@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
-import { ArrowRight, BookOpen, Brain, FileText, Headphones, LogOut, MessageSquare, Mic, User, Video, Menu, X, Facebook, Twitter, Instagram, Linkedin, Mail } from "lucide-react";
+import { ArrowRight, BookOpen, Brain, FileText, Headphones,  MessageSquare, Mic, User, Video, Menu, X, Facebook, Twitter, Instagram, Linkedin, Mail } from "lucide-react";
 import { useState } from "react";
 
 export default function HomePage() {
