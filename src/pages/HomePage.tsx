@@ -3,15 +3,31 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
 import { ArrowRight, BookOpen, Brain, FileText, Headphones,  MessageSquare, Mic, User, Video, Menu, X, Facebook, Twitter, Instagram, Linkedin, Mail } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef, RefObject } from "react";
+import "../styles/usermenu.css";
 
 export default function HomePage() {
   const { isAuthenticated, user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const handleLogout = async () => {
     try {
       await logout();
+      setUserMenuOpen(false);
     } catch (error) {
       console.error("Logout failed:", error);
     }
@@ -108,29 +124,35 @@ export default function HomePage() {
                 <Link to="/">Admin</Link>
               </Button>
             )}
-            <div className="relative group">
-              <Button variant="ghost" className="flex items-center">
+            <div className="relative" ref={userMenuRef}>
+              <Button 
+                variant="ghost" 
+                className="flex items-center"
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+              >
                 <User className="mr-2 h-4 w-4" />
-                {user?.firstName || "User"}
+                {user?.firstName || "unknown"}
               </Button>
-              <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 hidden group-hover:block z-10">
-                <div className="py-1">
-                  <Link to="/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                    Dashboard
-                  </Link>
-                    {user?.roles.includes("ADMIN") && (
-                      <Link to="/" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                      Admin Panel
+              {userMenuOpen && (
+                <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                  <div className="py-1">
+                    <Link to="/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                      Dashboard
                     </Link>
-                  )}
-                  <button
-                    onClick={handleLogout}
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Sign Out
-                  </button>
+                      {user?.roles.includes("ADMIN") && (
+                        <Link to="/" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        Admin Panel
+                      </Link>
+                    )}
+                    <button
+                      onClick={handleLogout}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
           
@@ -216,7 +238,7 @@ export default function HomePage() {
 
   // Homepage navbar for non-authenticated users
   const HomepageNavbar = () => (
-    <nav className="bg-white shadow-sm">
+    <nav className=" shadow-sm">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 justify-between items-center">
           <div className="flex items-center">
@@ -285,7 +307,7 @@ export default function HomePage() {
             </Link>
             <Link
               to="/signup"
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50"
+              className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-700"
               onClick={() => setMobileMenuOpen(false)}
             >
               Sign Up
@@ -325,7 +347,7 @@ export default function HomePage() {
                       Sign In
                     </Link>
                   </Button>
-                  <Button asChild size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
+                  <Button asChild size="lg" variant="outline" className="border-white text-black hover:bg-white/10">
                     <Link to="/signup">
                       Sign Up
                     </Link>
@@ -447,7 +469,7 @@ export default function HomePage() {
                       Sign In
                     </Link>
                   </Button>
-                  <Button asChild size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
+                  <Button asChild size="lg" variant="outline" className="border-white text-black hover:bg-white/10">
                     <Link to="/signup">
                       Sign Up
                     </Link>

@@ -15,6 +15,7 @@ import HomePage from "./pages/HomePage";
 import { Provider } from 'react-redux';
 import { store } from './store/store';
 import TestPage from "./pages/test/TestPage";
+import ResultsPage from "./pages/results";
 
 
 function App() {
@@ -136,6 +137,12 @@ function App() {
                 <Layout>
                   <div className="p-8">Tools Page</div>
                 </Layout>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/results" element={
+              <ProtectedRoute>
+                <ResultsPage />
               </ProtectedRoute>
             } />
           </Routes>

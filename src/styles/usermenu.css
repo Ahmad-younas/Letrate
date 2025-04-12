@@ -1,0 +1,19 @@
+/* User menu dropdown styles */
+.group:hover .hover-visible,
+.hover-visible {
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+/* Add a transition for smooth appearance/disappearance */
+.group > div[class*="absolute"] {
+  transition: opacity 0.2s, visibility 0.2s, transform 0.2s;
+  pointer-events: none;
+}
+
+.group:hover > div[class*="absolute"],
+.hover-visible {
+  pointer-events: auto;
+  transform: translateY(0);
+} 

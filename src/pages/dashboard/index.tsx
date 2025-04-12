@@ -50,7 +50,7 @@ export default function Dashboard() {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { user, logout, getTokenExpirationTime } = useAuth();
+  const { user } = useAuth();
   const [selectedTypeFilter, setSelectedTypeFilter] = useState("All");
   const [selectedTaskFilter, setSelectedTaskFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");

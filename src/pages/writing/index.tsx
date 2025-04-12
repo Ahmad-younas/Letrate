@@ -77,7 +77,6 @@ export default function WritingTest({ onComplete, test }: WritingTestProps) {
         dispatch(setLoading(true));
         
         const response = await api.get(`/api/tests/${testId}`, user?.token || "");
-        console.log("Test Details Response:", response);
         
         if (response.status === 200) {
           dispatch(setCurrentTest(response.data));
@@ -220,15 +219,15 @@ export default function WritingTest({ onComplete, test }: WritingTestProps) {
                     value={answers.part1}
                     onChange={(e) => handleTextChange(1, e.target.value)}
                     // Disable grammar and spell checking
-                    // data-gramm="false"
-                    // data-gramm_editor="false"
-                    // data-enable-grammarly="false"
-                    // spellCheck="false"
-                    // autoCorrect="off"
-                    // autoCapitalize="off"
-                    // // Prevent extensions from injecting content
-                    // data-ms-editor="false"
-                    // data-lt-installed="false"
+                    data-gramm="false"
+                    data-gramm_editor="false"
+                    data-enable-grammarly="false"
+                    spellCheck="false"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    // Prevent extensions from injecting content
+                    data-ms-editor="false"
+                    data-lt-installed="false"
                     // Custom styles to prevent interference
                     style={{ 
                       WebkitTextFillColor: 'inherit',
@@ -239,18 +238,18 @@ export default function WritingTest({ onComplete, test }: WritingTestProps) {
                       msUserSelect: 'none'
                     }}
                     // Completely disable copy-paste and text selection
-                    // onContextMenu={(e) => e.preventDefault()}
-                    // onCopy={(e) => e.preventDefault()}
-                    // onCut={(e) => e.preventDefault()}
-                    // onPaste={(e) => e.preventDefault()}
-                    // onDragStart={(e) => e.preventDefault()}
-                    // onDrop={(e) => e.preventDefault()}
-                    // onKeyDown={(e) => {
-                    //   // Prevent Ctrl+C, Ctrl+V, Ctrl+X
-                    //   if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'v' || e.key === 'x')) {
-                    //     e.preventDefault();
-                    //   }
-                    // }}
+                    onContextMenu={(e) => e.preventDefault()}
+                    onCopy={(e) => e.preventDefault()}
+                    onCut={(e) => e.preventDefault()}
+                    onPaste={(e) => e.preventDefault()}
+                    onDragStart={(e) => e.preventDefault()}
+                    onDrop={(e) => e.preventDefault()}
+                    onKeyDown={(e) => {
+                      // Prevent Ctrl+C, Ctrl+V, Ctrl+X
+                      if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'v' || e.key === 'x')) {
+                        e.preventDefault();
+                      }
+                    }}
                   />
                   
                   {/* Word Count */}

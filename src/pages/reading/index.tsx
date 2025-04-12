@@ -105,13 +105,11 @@ export default function ReadingTest({ onComplete, test }: ReadingTestProps) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useAuth();
-  console.log("user:", user);
   
   // Use the passed test prop if available, otherwise get from Redux
   const reduxTestData = useSelector((state: RootState) => state.test);
   const { isLoading, error } = reduxTestData;
   const currentTest = test;
-  console.log("currentTest",currentTest);
   
   
   
@@ -228,7 +226,7 @@ export default function ReadingTest({ onComplete, test }: ReadingTestProps) {
     navigate("/dashboard");
   };
 
-  const handleSubmitAnswer = () => {
+  const handleSubmitAnswer = async () => {
     setTimer(0);
     
     // Format answers for submission in the required format
@@ -238,8 +236,18 @@ export default function ReadingTest({ onComplete, test }: ReadingTestProps) {
       studentAnswer: answer
     }));
     
-    console.log("Submitting answers:", JSON.stringify({ studentAnswers: studentAnswers }, null, 2));
-    onComplete?.();
+    
+    try {
+      // Submit answers to the API
+      const response = await api.post(`/api/tests/submit`, { studentAnswers }, user?.token);
+      console.log("Submit response:", response);
+      
+      // Navigate to results page
+      navigate('/results');
+    } catch (error) {
+      console.error("Error submitting answers:", error);
+    }
+    
   };
 
   // If loading or error, show appropriate UI
@@ -344,10 +352,8 @@ export default function ReadingTest({ onComplete, test }: ReadingTestProps) {
                         {/* Display questions based on the question group type */}
                         {currentQuestionGroupData.type === "TrueFalseNotGiven" && currentQuestionGroupData.questions && (
                           currentQuestionGroupData.questions.map((question, index) => {
-                            console.log("Question:", question);
                             // Create a more reliable question ID
                             const questionFullId = question.questionId || question.id;
-                            console.log("questionFullId:", questionFullId);
                             return (
                               <div 
                               key={question.questionId}
